@@ -8,7 +8,13 @@
 # -- repository: YOUR REPOSITORY URL                                                                     -- #
 # -- --------------------------------------------------------------------------------------------------- -- #
 """
+import MetaTrader5 as mt
+import pandas as pd
 
+
+
+
+""" 
 import pandas as pd
 import data as dt
 
@@ -46,3 +52,4 @@ pio.renderers.default = "browser"  # to render the plot locally in your default 
 plot_data = go.Figure(go.Bar(x=df['column_a'], y=df['column_b']))
 # instruction to view it in specified render (in this case browser)
 plot_data.show()
+"""
