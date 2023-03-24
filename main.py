@@ -10,7 +10,15 @@
 """
 import MetaTrader5 as mt
 import pandas as pd
+import functions
 
+historico = (functions.f_leer_archivo())
+# print(f_pip_size('EURUSD'))
+tiempos = functions.f_columnas_tiempos(historico)
+pips = functions.f_columnas_pips(tiempos)
+estadistica,ranking = functions.f_estadisticas_ba(pips)
+print(estadistica)
+print(ranking)
 
 
 
