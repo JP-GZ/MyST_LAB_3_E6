@@ -12,6 +12,7 @@ import MetaTrader5
 import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
+import yfinance
 
 
 def f_leer_archivo():
@@ -168,9 +169,81 @@ def f_evolucion_capital(param_data):
     df = df.resample('D').sum()
     df['profit_d'] = df['Profit']
     df['profit_acm_d'] = df['Profit'].cumsum()
-    df['profit_acm_d'] = df['profit_acm_d'] + 100000
+    df['capital_acm'] = df['profit_acm_d'] + 100000
 
     return df
+
+def f_estadisiticas_mad(riskfree, df):
+    # Sacamos el radio de Sharpe inicial
+    rp = np.log(df.capital_acm) - np.log(df.capital_acm.shif(1))
+    rp = rp.fillna(0)
+    sdp = rp.std()
+    rp_mean = rp.mean()
+    rf = riskfree / 252
+    sharpe_og = (rp_mean - rf) / sdp
+
+    # Actualizamos el Sharpe Ratio
+    benchmark = yfinance.download('^GSPC', '2023-02-16', '2023-03-2')
+    benchmark = benchmark['Adj Close']
+    benchmark = pd.DataFrame(benchmark)
+
+    rp_benchmark = np.log(benchmark) - np.log(benchmark.shift(1))
+    rp_benchmark = pd.DataFrame(rp_benchmark)
+    rp_benchmark = rp_benchmark.rename(columns={'Adj Close': 'capital_acm'})
+
+    rp_rb = pd.concat([benchmark, rp_benchmark], axis=1)
+    rp_rb['Rp-Rb'] = rp_rb['capital_acm'] - rp_rb['Adj Close']
+
+    std_sra = rp_rb['Rp-Rb'].std()
+    r_trader = rp_rb['capital_acm'].mean()
+    rp_benchmark = rp_rb['Adj Close'].mean()
+
+    sharpe_actualizado = (r_trader - rp_benchmark) / std_sra
+
+    minimum = df.capital_acm.min()
+    maximum = df.capital_acm.max()
+
+    # Sacamos el drawdown
+    drawdown_cap = df.profit_acm_d.min()
+    date_drawdown = (df.loc[df.profit_acm_d == drawdown_cap].index.values[0])
+    date_drawdown = np.datetime_as_string(date_drawdown, unit='D')
+
+        #Creamos variables inciales para loop
+    temp = 0
+    peak = 0
+    du = 0
+    b =df.profit_acm_d
+
+        # Condicionales que vimos en clase
+    for i in range(len(b)):
+        if b[i] < b[i - 1] and b[i] < peak:
+            peak = b[i]
+            temp = 0
+
+        elif b[i] > b[i - 1]:
+            temp = b[i]
+
+        if du < (temp-peak):
+            du = temp - peak
+
+    drawup_cap = du
+    date_drawdown = np.datetime_as_string(df.loc[df.capital_acm == minimum].index.values[0], unit="D")
+
+    data = [
+        ['sharpe_original', 'Cantidad', sharpe_og, "Sharpe Ratio Fórmula Original"],
+        ['sharpe_actualizado', 'Cantidad', sharpe_actualizado, "Sharpe Ratio Fórmula Ajustada"],
+        ['drawdown_capi', 'Fecha Inicial', date_drawdown, "Fecha inicial del DrawDown de Capital"],
+        ['drawdown_capi', 'Fecha Final', date_drawdown, "Fecha final del DrawDown de Capital"],
+        ['drawdown_capi', 'Fecha Final', dd, "Máxima pérdida flotante registrada"],
+        ['drawup_capi', 'Fecha Inicial', date_drawup, "Fecha inicial del DrawUp de Capital"],
+        ['drawup_capi', 'Fecha Final', date_drawup, "Fecha final del DrawUp de Capital"],
+        ['drawup_capi', 'Fecha Final', drawup_cap, "Máxima ganancia flotante registrada"]
+    ]
+    # Creamos un dataframe con todos los datos que acabamos de sacar
+    df = pd.DataFrame(data, columns = ['Metrica', '', 'Valor', 'Descripcion'])
+
+    return df, dd, drawup_cap
+
 
 
 
