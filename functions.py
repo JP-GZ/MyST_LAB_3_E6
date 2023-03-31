@@ -150,3 +150,44 @@ def f_estadisticas_ba(param_data):
     return (df_1_tabla,df_2_ranking)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Behavioral finance 
+
+def f_columnas_pips2(param_data):
+    paran_data['float_pips'] = [(param_data['float_price'].iloc[i]
+    - param_data['Price'].iloc[i])*f_pip_size(param_data['Symbol'].iloc[i])
+    if param_data['Type'].iloc[i]=='buy'
+    else (param_data['Price'].iloc[i]- param_data['float_price'].iloc[i])*
+    f_pip_size(param_data['Symbol'].iloc[i])
+    for i in range(len(param_data))]
+    return param_data
+
+
+
