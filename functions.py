@@ -15,13 +15,17 @@ import numpy as np
 
 
 def f_leer_archivo():
-    cuenta = pd.read_csv(r'.\files\Accounts.csv')
-    nombres = list(cuenta['Name'])
-    print(f'Nombres disponibles:', nombres)
-    global nombre
-    nombre = input('Ingrese nombre cuenta a utilizar:')
-    uname = int(cuenta['Account'][cuenta.Name == nombre][0])
-    pword = str(cuenta['Password'][cuenta.Name == nombre][0])
+    #cuenta = pd.read_csv(r'.\files\Accounts.csv')
+    #nombres = list(cuenta['Name'])
+    #print(f'Nombres disponibles:', nombres)
+    #global nombre
+    #nombre = input('Ingrese nombre cuenta a utilizar:')
+    #uname = int(cuenta['Account'][cuenta.Name == nombre][0])
+    #pword = str(cuenta['Password'][cuenta.Name == nombre][0])
+
+    # Prueba
+    uname = 5568903
+    pword = 'Dn8UIDQw'
     # Ensure that all variables are the correct type
 
     trading_server = str('FxPro-MT5')  # Server must be a string
@@ -87,12 +91,16 @@ def f_leer_archivo():
 
 
 def f_pip_size(param_ins):
-    cuenta = pd.read_csv(r'.\files\Accounts.csv')
-    uname = int(cuenta['Account'][cuenta.Name == nombre][0])
-    pword = str(cuenta['Password'][cuenta.Name == nombre][0])
+    #cuenta = pd.read_csv(r'.\files\Accounts.csv')
+    #uname = int(cuenta['Account'][cuenta.Name == nombre][0])
+    #pword = str(cuenta['Password'][cuenta.Name == nombre][0])
+    
+    uname = 5568903
+    pword = 'Dn8UIDQw'
+    
     trading_server = str('FxPro-MT5')  # Server must be a string
     try:
-        MetaTrader5.initialize(login=uname, server='FxPro-MT5', password=pword)
+        MetaTrader5.initialize(login=uname, server= trading_server, password=pword)
         pip_size = int(0.1 / MetaTrader5.symbol_info(param_ins)._asdict().get('trade_tick_size'))
         return pip_size
     except:
@@ -148,6 +156,23 @@ def f_estadisticas_ba(param_data):
     df_2_ranking = df_2_ranking.sort_values(by='rank (%)', ascending=False).reset_index(drop=True)
 
     return (df_1_tabla,df_2_ranking)
+
+#%% Parte 2: Métricas de Atribución al Desempeño
+
+def f_evolucion_capital(param_data):
+    param_data['close_time'] = [i.strftime('%Y-%m-%d') for i in param_data['close_time']]
+    param_data['timestamp'] = pd.to_datetime(param_data['close_time'])
+    df = pd.DataFrame({'timestamp': pd.date_range(start='2/16/2023', end='3/2/2023')})
+    df = df.fillna(0)
+    df = df.set_index('timestamp')
+    df = df.resample('D').sum()
+    df['profit_d'] = df['Profit']
+    df['profit_acm_d'] = df['Profit'].cumsum()
+    df['profit_acm_d'] = df['profit_acm_d'] + 100000
+
+    return df
+
+
 
 
 
