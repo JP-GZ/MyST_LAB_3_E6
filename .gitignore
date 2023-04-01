@@ -10,13 +10,8 @@ python_project.code-workspace
 
 # -- Exclude vscode settings folder
 .vscode/
-
 # -- Exclude virtual environment
 python_project_venv/
-
-# -- Exclude files folder (sometimes is useful not to exclude it)
-files/
-
 # ----------------------------------------------------------------- #
 # ----------------------------------------------------------------- #
 
@@ -149,3 +144,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+data_trades.csv
