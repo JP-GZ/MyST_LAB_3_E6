@@ -29,9 +29,9 @@ def estadistica_descriptiva():
 #
 # # Step 2: Métricas de Atribución al Desempeño.
 #
-# desempeno = functions.f_evolucion_capital(historico)
+desempeno = functions.f_evolucion_capital(historico)
 #
-# estadisticas_rs = functions.f_estadisticas_mad(0.05, desempeno)
+estadisticas_rs = functions.f_estadisticas_mad(0.05, desempeno)
 
 
 

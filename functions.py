@@ -65,8 +65,6 @@ def f_estadisticas_ba(param_data):
 #%% Parte 2: Métricas de Atribución al Desempeño
 
 
-
-
 def f_evolucion_capital(param_data):
     param_data['timestamp'] = pd.to_datetime(param_data['close_time'].dt.date)
     df = pd.DataFrame(index=pd.date_range(start='2/16/2023', end='3/2/2023'), columns=['profit_d', 'profit_acm_d', 'capital_acm'])
