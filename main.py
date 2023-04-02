@@ -17,13 +17,8 @@ def estadistica_descriptiva():
     historico = (data.f_leer_archivo())
     historico = functions.f_columnas_tiempos(historico)
     historico = functions.f_columnas_pips(historico)
-    estadistica_ba = functions.f_estadisticas_ba(historico)
-    return  historico,estadistica_ba
-
-his ,est = estadistica_descriptiva()
-print(est)
-print(his)
-
+    estadistica_ba , ranks  = functions.f_estadisticas_ba(historico)
+    return  historico,estadistica_ba,ranks
 # print(f_pip_size('EURUSD'))
 
 # tiempos = functions.f_columnas_tiempos(historico)

@@ -8,7 +8,7 @@
 # -- --------------------------------------------------------------------------------------------------- -- #
 """
 import statistics
-import MetaTrader5
+import MetaTrader5 as mt
 import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
