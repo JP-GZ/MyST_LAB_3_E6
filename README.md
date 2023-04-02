@@ -15,7 +15,10 @@ Or you can manually install one by one using the name and version in the file.
 *Add here examples of core functionalities for the project in this repository.*
 
 ## Author
-*Add Name and a brief description on who you are.*
+- Juan Pablo Garcia Zaragoza
+- Aniel Esthefania Villanueva Mendoza
+- Gabriela Ivonne Montoya Ortiz
+- Andrés González Luna Díaz del Castillo
 
 ## License
 **GNU General Public License v3.0** 
