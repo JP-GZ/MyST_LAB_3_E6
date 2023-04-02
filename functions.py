@@ -66,7 +66,7 @@ def f_estadisticas_ba(param_data):
 
 
 def f_evolucion_capital(param_data):
-    param_data['timestamp'] = pd.to_datetime(param_data['close_time'].dt.date)
+    param_data['timestamp'] = pd.to_datetime(param_data['closetime'].dt.date)
     df = pd.DataFrame(index=pd.date_range(start='2/16/2023', end='3/2/2023'), columns=['profit_d', 'profit_acm_d', 'capital_acm'])
     df['profit_d'] = param_data.groupby('timestamp')['Profit'].sum()
     df['profit_acm_d'] = df['profit_d'].cumsum()
