@@ -150,8 +150,6 @@ def f_estadisiticas_mad(riskfree, df):
 
 
 
-
-
 #%% Behavioral finance 
 
 def f_columnas_pips2(param_data):
@@ -161,90 +159,58 @@ def f_columnas_pips2(param_data):
                 for i in range(len(param_data))]
     return param_data
 
-def f_be_de_1(param_data):
-    # Filtrado de operaciones ganadoras (operaciones ancla)
-    param_data['capital_acm'] = param_data['profit_acm'] + 100000
-    ganadoras = param_data[param_data.Profit > 0]
-    ganadoras = ganadoras.reset_index(drop=True)
-    ganadoras["Ratio"] = (ganadoras["Profit"] / abs(ganadoras["profit_acm"]))
-
-    perdedoras = param_data[param_data.Profit < 0]
-    perdedoras = perdedoras.reset_index(drop=True)
-    perdedoras["Ratio"] = (perdedoras["Profit"] / abs(perdedoras["profit_acm"]))
-
-    df_anclas = ganadoras.loc[:, ['close_time', "open_time", 'Type', "Symbol",'Profit', "profit_acm", "capital_acm", "Ratio", "Time", "Time.1", "Price", "Volume"]]                         
-    df_anclas = df_anclas.reset_index(drop=True)
-    
-    # Criterio de selección de operaciones abiertas por cada ancla
+def f_be_de(param_data):
     ocurrencias = []
-    file_list = []
-    for x in df_anclas.index:
-        df = param_data[(param_data.open_time <= df_anclas["close_time"][x]) &
-                        (param_data.close_time > df_anclas["close_time"][x])].loc[:,
-             ['Type', 'Symbol', 'Volume', 'Profit', "Price", "pips"]]
-        df['close_time_ancla'] = pd.Timestamp(df_anclas['close_time'][x])
-        file_list.append(df)
-        ocurrencias.append(len(df))
-    all_df = pd.concat(file_list, ignore_index=True)
-
-    # Descarga de precios para cada operación abierta
-    float_price = []
-  
-    for i in range(len(all_df)):
-        utc_from = datetime(all_df['close_time_ancla'][i].year,
-                            all_df['close_time_ancla'][i].month,
-                            all_df['close_time_ancla'][i].day) 
-        utc_to = datetime(all_df['close_time_ancla'][i].year+1,
-                            all_df['close_time_ancla'][i].month+1,
-                            all_df['close_time_ancla'][i].day+1) 
-        symbol = all_df['Symbol'][i]
-        ticks = mt.copy_ticks_range(symbol, utc_from, utc_to, mt.COPY_TICKS_ALL)
-        ticks_frame = pd.DataFrame(ticks)
-        ticks_frame['time'] = pd.to_datetime(ticks_frame['time'], unit='s')
-        tick_time = next(x for x in ticks_frame['time'] if x >= all_df['close_time_ancla'][i])
-        price = ticks_frame.loc[ticks_frame['time'] == tick_time]
-        if all_df["Type"][i] == "buy":
-            price = price["bid"].mean()
-        else:
-            price = price["ask"].mean()
-        float_price.append(price)
-        float_prices = pd.DataFrame(columns=['float_price'], data=float_price)
-
-    all_df = all_df.join(float_prices)
-
-    all_df = f_columnas_pips2(all_df)
-    all_df["float_P&L"] = (all_df["Profit"] / all_df["pips"]) * all_df["float_pips"]
-    all_df = all_df[all_df['float_P&L'] < 0].reset_index(drop=True)
-
-    return all_df, df_anclas
-def f_be_de2(param_data):
-    # Filtrado de operaciones ancla para ganadoras 
-    param_data['capital_acm'] = param_data['profit_acm'] + 100000
-    ganadoras = param_data[param_data.Profit > 0]
-    ganadoras = ganadoras.reset_index(drop=True)
-    ganadoras["Ratio"] = (ganadoras["Profit"] / abs(ganadoras["profit_acm"]))
-    perdedoras = param_data[param_data.Profit < 0]
-    perdedoras = perdedoras.reset_index(drop=True)
-    perdedoras["Ratio"] = (perdedoras["Profit"] / abs(perdedoras["profit_acm"]))
-
-    df_anclas = ganadoras.loc[:, ['close_time', "open_time", 'Type', "Symbol",'Profit', "profit_acm", "capital_acm", "Ratio", "Time", "Time.1", "Price", "Volume"]]                         
-    df_anclas = df_anclas.reset_index(drop=True)
+    cantidad_ocurrencias = 0
+    resultados = {'ocurrencias': ocurrencias, 'cantidad': cantidad_ocurrencias}
     
+    # Agregar columna de capital acumulado
+    param_data['capital_acm'] = param_data['profit_acm'] + 100000
+    
+    for i in range(len(param_data) - 1):
+        # Identificar la operación ganadora
+        if param_data.iloc[i]['Profit'] > 0:
+            operacion_ganadora = param_data.iloc[i]
+            # Identificar la operación perdedora
+            j = i + 1
+            while j < len(param_data) and param_data.iloc[j]['Profit'] >= 0:
+                j += 1
+            if j < len(param_data):
+                operacion_perdedora = param_data.iloc[j]
+                # Calcular ratios
+                ratio_cp_cg = abs(operacion_perdedora['Profit'] / operacion_ganadora['Profit'])
+                ratio_cp_profit_acm = abs(operacion_perdedora['Profit'] / operacion_perdedora['profit_acm'])
+                ratio_cg_profit_acm = abs(operacion_ganadora['Profit'] / operacion_ganadora['profit_acm'])
+                
+                # Verificar si se cumple el sesgo
+                if ratio_cp_cg > 1 and ratio_cp_profit_acm > ratio_cg_profit_acm:
+                    # Guardar información de las operaciones
+                    ocurrencia = {
+                        f'ocurrencia_{cantidad_ocurrencias + 1}': {
+                            'timestamp': operacion_ganadora['close_time'],
+                            'operaciones': {
+                                'ganadora': {
+                                    'instrumento': operacion_ganadora['Symbol'],
+                                    'volumen': operacion_ganadora['Volume'],
+                                    'sentido': operacion_ganadora['Type'],
+                                    'profit_ganadora': operacion_ganadora['Profit']
+                                },
+                                'perdedora': {
+                                    'instrumento': operacion_perdedora['Symbol'],
+                                    'volumen': operacion_perdedora['Volume'],
+                                    'sentido': operacion_perdedora['Type'],
+                                    'profit_perdedora': operacion_perdedora['Profit']
+                                }
+                            },
+                            'ratio_cp_profit_acm': ratio_cp_profit_acm,
+                            'ratio_cg_profit_acm': ratio_cg_profit_acm,
+                            'ratio_cp_cg': ratio_cp_cg
+                        }
+                    }
+                    ocurrencias.append(ocurrencia)
+                    cantidad_ocurrencias += 1
 
-    #selección de operaciones abiertas por cada ancla
-    ocurrencias = []
-    file_list = []
-    for x in df_anclas.index:
-        df = param_data[(param_data.open_time <= df_anclas["close_time"][x]) &
-                        (param_data.close_time > df_anclas["close_time"][x])].loc[:,
-             ['Type', 'Symbol', 'Volume', 'Profit', "Price", "pips"]]
-        df['close_time_ancla'] = pd.Timestamp(df_anclas['close_time'][x])
-        file_list.append(df)
-        ocurrencias.append(len(df))
-    all_df = pd.concat(file_list, ignore_index=True)
+    resultados['cantidad'] = cantidad_ocurrencias
+    resultados['ocurrencias'] = ocurrencias
+    return resultados
 
-    # Descarga de precios para cada operación abierta
-    float_price = []
-    if not mt.initialize():
-        print(mt.last_error())
-        quit()
