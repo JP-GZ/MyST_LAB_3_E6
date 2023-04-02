@@ -12,7 +12,7 @@ import MetaTrader5 as mt
 import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
-import yfinance
+import yfinance as yf
 
 def f_pip_size(param_ins):
     pips = pd.read_csv("files/instruments_pips.csv")
@@ -120,12 +120,12 @@ def f_estadisiticas_mad(riskfree, df):
     # Create DataFrame with dictionary
     df_results = pd.DataFrame(data)
 
-    return df_results, dd, drawup_cap
+    return df_results, drawdown_cap, drawup_cap
 
 #%% Behavioral finance 
 
 def f_columnas_pips2(param_data):
-    param_data['float_pips'] = [(param_data['float_price'].iloc[i]-param_data['Price'].iloc[i])*f_pip_size(param_data['Symbol'].iloc[i])
+    param_data['pips'] = [(param_data['float_price'].iloc[i]-param_data['Price'].iloc[i])*f_pip_size(param_data['Symbol'].iloc[i])
                 if param_data['Type'].iloc[i]== 'buy'
                 else (param_data['Price'].iloc[i]-param_data['float_price'].iloc[i])*f_pip_size(param_data['Symbol'].iloc[i])
                 for i in range(len(param_data))]
@@ -159,7 +159,7 @@ def f_be_de(param_data):
                     # Guardar información de las operaciones
                     ocurrencia = {
                         f'ocurrencia_{cantidad_ocurrencias + 1}': {
-                            'timestamp': operacion_ganadora['close_time'],
+                            'timestamp': operacion_ganadora['closetime'],
                             'operaciones': {
                                 'ganadora': {
                                     'instrumento': operacion_ganadora['Symbol'],
@@ -184,5 +184,6 @@ def f_be_de(param_data):
 
     resultados['cantidad'] = cantidad_ocurrencias
     resultados['ocurrencias'] = ocurrencias
+
     return resultados
 
