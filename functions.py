@@ -160,92 +160,67 @@ def f_estadisticas_ba(param_data):
 
 #%% Parte 2: Métricas de Atribución al Desempeño
 
-def f_evolucion_capital(param_data):
-    param_data['close_time'] = [i.strftime('%Y-%m-%d') for i in param_data['close_time']]
-    param_data['timestamp'] = pd.to_datetime(param_data['close_time'])
-    df = pd.DataFrame({'timestamp': pd.date_range(start='2/16/2023', end='3/2/2023')})
-    df = df.fillna(0)
-    df = df.set_index('timestamp')
-    df = df.resample('D').sum()
-    df['profit_d'] = df['Profit']
-    df['profit_acm_d'] = df['Profit'].cumsum()
-    df['capital_acm'] = df['profit_acm_d'] + 100000
 
+
+
+def f_evolucion_capital(param_data):
+    param_data['timestamp'] = pd.to_datetime(param_data['close_time'].dt.date)
+    df = pd.DataFrame(index=pd.date_range(start='2/16/2023', end='3/2/2023'), columns=['profit_d', 'profit_acm_d', 'capital_acm'])
+    df['profit_d'] = param_data.groupby('timestamp')['Profit'].sum()
+    df['profit_acm_d'] = df['profit_d'].cumsum()
+    df['capital_acm'] = df['profit_acm_d'] + 100000
     return df
 
+
+
 def f_estadisiticas_mad(riskfree, df):
-    # Sacamos el radio de Sharpe inicial
-    rp = np.log(df.capital_acm) - np.log(df.capital_acm.shif(1))
-    rp = rp.fillna(0)
-    sdp = rp.std()
-    rp_mean = rp.mean()
+    # Calculate initial Sharpe ratio
+    returns = df.capital_acm.pct_change().fillna(0)
+    sdp = returns.std()
+    rp_mean = returns.mean()
     rf = riskfree / 252
     sharpe_og = (rp_mean - rf) / sdp
 
-    # Actualizamos el Sharpe Ratio
-    benchmark = yfinance.download('^GSPC', '2023-02-16', '2023-03-2')
-    benchmark = benchmark['Adj Close']
-    benchmark = pd.DataFrame(benchmark)
-
-    rp_benchmark = np.log(benchmark) - np.log(benchmark.shift(1))
-    rp_benchmark = pd.DataFrame(rp_benchmark)
-    rp_benchmark = rp_benchmark.rename(columns={'Adj Close': 'capital_acm'})
-
-    rp_rb = pd.concat([benchmark, rp_benchmark], axis=1)
+    # Update Sharpe ratio using benchmark
+    benchmark = yf.download('^GSPC', '2023-02-16', '2023-03-02')['Adj Close']
+    rp_benchmark = benchmark.pct_change().fillna(0)
+    rp_rb = pd.concat([df.capital_acm, rp_benchmark], axis=1)
     rp_rb['Rp-Rb'] = rp_rb['capital_acm'] - rp_rb['Adj Close']
-
     std_sra = rp_rb['Rp-Rb'].std()
     r_trader = rp_rb['capital_acm'].mean()
     rp_benchmark = rp_rb['Adj Close'].mean()
-
     sharpe_actualizado = (r_trader - rp_benchmark) / std_sra
 
-    minimum = df.capital_acm.min()
-    maximum = df.capital_acm.max()
+    # Calculate drawdown and drawup
+    cum_returns = df.capital_acm.values
+    previous_peaks = np.maximum.accumulate(cum_returns)
+    drawdowns = previous_peaks - cum_returns
+    drawdown_cap = drawdowns.min()
+    date_drawdown = df.index[drawdowns.argmin()].strftime('%Y-%m-%d')
+    drawups = np.diff(previous_peaks)
+    drawup_cap = drawups.max()
+    date_drawup = df.index[np.argmax(drawups)].strftime('%Y-%m-%d')
 
-    # Sacamos el drawdown
-    drawdown_cap = df.profit_acm_d.min()
-    date_drawdown = (df.loc[df.profit_acm_d == drawdown_cap].index.values[0])
-    date_drawdown = np.datetime_as_string(date_drawdown, unit='D')
+    # Create DataFrame with results
 
-        #Creamos variables inciales para loop
-    temp = 0
-    peak = 0
-    du = 0
-    b =df.profit_acm_d
+    # Create dictionary with results
+    data = {
+        'Metrica': ['sharpe_original', 'sharpe_actualizado', 'drawdown_capi', 'drawdown_capi', 'drawdown_capi',
+                    'drawup_capi', 'drawup_capi', 'drawup_capi'],
+        '': ['Cantidad', 'Cantidad', 'Fecha Inicial', 'Fecha Final', 'Máxima pérdida flotante registrada',
+             'Fecha Inicial', 'Fecha Final', 'Máxima ganancia flotante registrada'],
+        'Valor': [sharpe_og, sharpe_actualizado, date_drawdown, date_drawdown, drawdown_cap, date_drawup, date_drawup,
+                  drawup_cap],
+        'Descripcion': ["Sharpe Ratio Fórmula Original", "Sharpe Ratio Fórmula Ajustada",
+                        "Fecha inicial del DrawDown de Capital", "Fecha final del DrawDown de Capital",
+                        "Máxima pérdida flotante registrada", "Fecha inicial del DrawUp de Capital",
+                        "Fecha final del DrawUp de Capital", "Máxima ganancia flotante registrada"]
+    }
 
-        # Condicionales que vimos en clase
-    for i in range(len(b)):
-        if b[i] < b[i - 1] and b[i] < peak:
-            peak = b[i]
-            temp = 0
+    # Create DataFrame with dictionary
+    df_results = pd.DataFrame(data)
 
-        elif b[i] > b[i - 1]:
-            temp = b[i]
-
-        if du < (temp-peak):
-            du = temp - peak
-
-    drawup_cap = du
-    date_drawdown = np.datetime_as_string(df.loc[df.capital_acm == minimum].index.values[0], unit="D")
-
-    data = [
-        ['sharpe_original', 'Cantidad', sharpe_og, "Sharpe Ratio Fórmula Original"],
-        ['sharpe_actualizado', 'Cantidad', sharpe_actualizado, "Sharpe Ratio Fórmula Ajustada"],
-        ['drawdown_capi', 'Fecha Inicial', date_drawdown, "Fecha inicial del DrawDown de Capital"],
-        ['drawdown_capi', 'Fecha Final', date_drawdown, "Fecha final del DrawDown de Capital"],
-        ['drawdown_capi', 'Fecha Final', dd, "Máxima pérdida flotante registrada"],
-        ['drawup_capi', 'Fecha Inicial', date_drawup, "Fecha inicial del DrawUp de Capital"],
-        ['drawup_capi', 'Fecha Final', date_drawup, "Fecha final del DrawUp de Capital"],
-        ['drawup_capi', 'Fecha Final', drawup_cap, "Máxima ganancia flotante registrada"]
-    ]
-    # Creamos un dataframe con todos los datos que acabamos de sacar
-    df = pd.DataFrame(data, columns = ['Metrica', '', 'Valor', 'Descripcion'])
-
-    return df, dd, drawup_cap
-
-
-
+    return df_results, dd, drawup_cap
 
 
 #%% Behavioral finance 
