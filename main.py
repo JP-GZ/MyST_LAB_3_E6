@@ -11,20 +11,27 @@
 import MetaTrader5 as mt
 import pandas as pd
 import functions
+import data
 
-historico = (functions.f_leer_archivo())
+def estadistica_descriptiva():
+    historico = (data.f_leer_archivo())
+    historico = functions.f_columnas_tiempos(historico)
+    historico = functions.f_columnas_pips(historico)
+    estadistica_ba , ranks  = functions.f_estadisticas_ba(historico)
+    return  historico,estadistica_ba,ranks
 # print(f_pip_size('EURUSD'))
-tiempos = functions.f_columnas_tiempos(historico)
-pips = functions.f_columnas_pips(tiempos)
-estadistica,ranking = functions.f_estadisticas_ba(pips)
-print(estadistica)
-print(ranking)
 
-# Step 2: Métricas de Atribución al Desempeño.
-
-desempeno = functions.f_evolucion_capital(historico)
-
-estadisticas_rs = functions.f_estadisticas_mad(0.05, desempeno)
+# tiempos = functions.f_columnas_tiempos(historico)
+# pips = functions.f_columnas_pips(tiempos)
+# estadistica,ranking = functions.f_estadisticas_ba(pips)
+# print(estadistica)
+# print(ranking)
+#
+# # Step 2: Métricas de Atribución al Desempeño.
+#
+# desempeno = functions.f_evolucion_capital(historico)
+#
+# estadisticas_rs = functions.f_estadisticas_mad(0.05, desempeno)
 
 
 

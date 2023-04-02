@@ -11,11 +11,13 @@ Install all the dependencies stated in the requirements.txt file, just run the f
 Or you can manually install one by one using the name and version in the file.
 
 ## Funcionalities
-
-*Add here examples of core functionalities for the project in this repository.*
+Este laboratorio tiene como propósito particular el elaborar herramientas para el análisis del desempeño de la actividad de trading, desde el punto de vista de la cuenta y desde el punto de vista de la persona que opera la cuenta (trader).
 
 ## Author
-*Add Name and a brief description on who you are.*
+- Juan Pablo Garcia Zaragoza
+- Aniel Esthefania Villanueva Mendoza
+- Gabriela Ivonne Montoya Ortiz
+- Andrés González Luna Díaz del Castillo
 
 ## License
 **GNU General Public License v3.0** 
